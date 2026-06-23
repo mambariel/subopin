@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUBOPIN | Monitoramento ADPF 635</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Secretaria de Estado de Segurança Pública • SUBOPIN</p>
+        <h1>Monitoramento de Atividades | ADPF 635</h1>
+        <p class="subtitle">Painel executivo para acompanhar tasks vinculadas aos eixos e ações estratégicas do Plano de Reocupação Territorial.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="newTaskBtn" class="btn accent">Nova task</button>
+        <button id="refreshBtn" class="btn primary">Atualizar dados</button>
+        <button id="exportBtn" class="btn ghost">Exportar CSV</button>
+      </div>
+    </header>
+
+    <section class="meta-grid">
+      <div class="meta-card"><span>Última carga</span><strong id="updatedAt">—</strong></div>
+      <div class="meta-card"><span>Fonte</span><strong>Google Sheets</strong></div>
+      <div class="meta-card"><span>Plano</span><strong>PERT / ADPF 635</strong></div>
+    </section>
+
+    <section class="filters" aria-label="Filtros do painel">
+      <label>Busca<input id="searchInput" type="search" placeholder="task, medida, responsável, ação..." /></label>
+      <label>Eixo<select id="axisFilter"></select></label>
+      <label>Ação estratégica<select id="actionFilter"></select></label>
+      <label>Status<select id="statusFilter"></select></label>
+      <label>Prioridade<select id="priorityFilter"></select></label>
+      <label>Fase<select id="phaseFilter"></select></label>
+      <label>Território<select id="territoryFilter"></select></label>
+    </section>
+
+    <main>
+      <section class="kpi-grid">
+        <article class="kpi"><span>Total de tasks</span><strong id="kpiTotal">0</strong><small>linhas ativas na aba Tasks</small></article>
+        <article class="kpi success"><span>Concluídas</span><strong id="kpiDone">0</strong><small id="kpiDonePct">0%</small></article>
+        <article class="kpi info"><span>Em andamento</span><strong id="kpiProgress">0</strong><small>execução em curso</small></article>
+        <article class="kpi danger"><span>Atrasadas</span><strong id="kpiLate">0</strong><small>prazo vencido ou alerta crítico</small></article>
+        <article class="kpi warn"><span>Dependência externa</span><strong id="kpiBlocked">0</strong><small>aguardando terceiros</small></article>
+      </section>
+
+      <section class="chart-grid">
+        <article class="panel">
+          <div class="panel-title"><h2>Distribuição por status</h2><span>Visão executiva</span></div>
+          <canvas id="statusChart" height="170"></canvas>
+        </article>
+        <article class="panel">
+          <div class="panel-title"><h2>Tasks por eixo</h2><span>Concentração operacional</span></div>
+          <canvas id="axisChart" height="170"></canvas>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><h2>Avanço por ação estratégica</h2><span id="actionCountLabel">0 ações com task cadastrada</span></div>
+        <div id="actionCards" class="action-grid"></div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-title"><h2>Atividades monitoradas</h2><span id="tableCount">0 registros</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Task</th><th>ID Ação</th><th>Eixo</th><th>Status</th><th>Prioridade</th><th>Prazo</th><th>Responsável</th><th>Alerta</th><th>Anexos</th>
+              </tr>
+            </thead>
+            <tbody id="taskTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  <dialog id="taskFormDialog" class="form-dialog">
+    <button class="dialog-close" id="closeFormDialog" aria-label="Fechar">×</button>
+    <form id="newTaskForm" class="task-form">
+      <div class="form-header">
+        <p class="eyebrow">Cadastro operacional</p>
+        <h2>Nova task vinculada ao Plano Estratégico</h2>
+        <p>Selecione o ID da ação estratégica. O sistema preencherá o eixo e gravará a nova linha na aba <strong>Tasks</strong> do Google Sheets.</p>
+      </div>
+
+      <div class="form-grid">
+        <label class="wide">Ação estratégica *
+          <select id="formAcaoId" name="acao_id" required></select>
+        </label>
+        <div class="action-preview wide" id="formActionPreview">Selecione uma ação para visualizar o eixo e o texto estratégico.</div>
+
+        <label class="wide">Task *
+          <input name="task" required placeholder="Ex.: Consolidar matriz de responsabilidades operacionais" />
+        </label>
+
+        <label class="wide">Descrição
+          <textarea name="descricao" rows="2" placeholder="Detalhe o escopo da atividade."></textarea>
+        </label>
+
+        <label class="wide">Medidas
+          <textarea name="medidas" rows="2" placeholder="Providências necessárias, encaminhamentos, marcos de execução."></textarea>
+        </label>
+
+        <label>Status *
+          <select name="status" id="formStatus" required></select>
+        </label>
+
+        <label>Prioridade
+          <select name="prioridade" id="formPrioridade"></select>
+        </label>
+
+        <label>Fase
+          <select name="fase" id="formFase"></select>
+        </label>
+
+        <label>Território
+          <input name="territorio" placeholder="Ex.: Gardênia Azul / Rio das Pedras / Muzema" />
+        </label>
+
+        <label>Responsável
+          <input name="responsavel" placeholder="Nome ou área responsável" />
+        </label>
+
+        <label>Órgão
+          <input name="orgao" placeholder="Ex.: SUBOPIN, SEPM, SEPOL" />
+        </label>
+
+        <label>Início
+          <input name="inicio" type="date" />
+        </label>
+
+        <label>Prazo
+          <input name="prazo" type="date" />
+        </label>
+
+        <label>Conclusão
+          <input name="conclusao" type="date" />
+        </label>
+
+        <label>% execução
+          <input name="percentual" type="number" min="0" max="100" step="5" placeholder="0 a 100" />
+        </label>
+
+        <label class="wide">Dependência
+          <input name="dependencia" placeholder="Ex.: aguarda resposta de órgão externo" />
+        </label>
+
+        <label class="wide">Interdependência
+          <input name="interdependencia" placeholder="Ex.: vinculado à task 1.1.002" />
+        </label>
+
+        <label class="wide">Anexos
+          <input name="anexos" placeholder="Cole o link SEI, Drive ou repositório" />
+        </label>
+
+        <label class="wide">Observações
+          <textarea name="observacoes" rows="2"></textarea>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn ghost" id="cancelFormBtn">Cancelar</button>
+        <button type="submit" class="btn primary">Salvar task</button>
+      </div>
+      <p class="form-note" id="formSaveNote"></p>
+    </form>
+  </dialog>
+
+  <dialog id="taskDialog">
+    <button class="dialog-close" id="closeDialog" aria-label="Fechar">×</button>
+    <div id="dialogContent"></div>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
