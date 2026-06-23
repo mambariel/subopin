@@ -1,5 +1,5 @@
 // Cole aqui a URL do Web App do Apps Script após a publicação.
-const API_URL = "COLE_AQUI_A_URL_DO_WEB_APP";
+const API_URL = "https://script.google.com/macros/s/AKfycbxvVN3fLO2xN5h4EuEPURejVn8NFVKINEHQPsALP8LBaV-kFRUuQM6N_BR9ABDfCXq0rQ/exec";
 
 const STATUS_OPTIONS = ["Não iniciado", "Em andamento", "Aguardando terceiros", "Concluído", "Atrasado", "Suspenso", "Cancelado"];
 const PRIORIDADE_OPTIONS = ["Baixa", "Média", "Alta", "Crítica"];
